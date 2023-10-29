@@ -41,7 +41,7 @@ readonly NODE_IMAGE=$(
 docker pull "${NODE_IMAGE}"
 docker build --force-rm \
     --build-arg ARCH="${ARCH}" \
-    --build-arg NODE_IMAGE="node:16.18.0-alpine3.16-arm64" \
+    --build-arg NODE_IMAGE="arm64v8/node:hydrogen-alpine" \
     --build-arg GITHUB_RELEASE="${TRAVIS_TAG:-none}" \
     --platform linux/arm64 \
     -f src/shadowbox/docker/Dockerfile \
