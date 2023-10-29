@@ -23,9 +23,6 @@ jobs:
           node-version: 18
           cache: npm
 
-      - name: Install NPM Dependencies
-        run: npm ci
-
       - name: Login to Github Packages
         uses: docker/login-action@v2
         with:
