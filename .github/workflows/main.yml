@@ -28,7 +28,7 @@ jobs:
 
       - name: Shadowbox Docker Build
         env:
-#          ARCH: arm64
+          ARCH: arm64
           SB_IMAGE: ghcr.io/zagirnur/vpn-provider-outline:latest
         run: npm run action shadowbox/docker/build
 
