@@ -41,13 +41,10 @@ readonly NODE_IMAGE=$(
 docker pull "${NODE_IMAGE}"
 docker buildx create --name mybuilder --use
 docker buildx inspect mybuilder --bootstrap
-
 docker buildx build --platform linux/arm64 \
     --build-arg ARCH="${ARCH}" \
     --build-arg NODE_IMAGE="${NODE_IMAGE}" \
     --build-arg GITHUB_RELEASE="${TRAVIS_TAG:-none}" \
     -f src/shadowbox/docker/Dockerfile \
     -t "${SB_IMAGE:-outline/shadowbox}" \
-    "${ROOT_DIR}" \
-    --push
-
+    "${ROOT_DIR}"
