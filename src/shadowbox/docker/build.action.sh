@@ -24,26 +24,21 @@ export ARCH=${ARCH:-x86_64}
 # Newer node images have no valid content trust data.
 # Pin the image node:16.18.0-alpine3.16 by hash.
 # See image at https://hub.docker.com/_/node/tags?page=1&name=18.18.0-alpine3.18
-readonly NODE_IMAGE=$(
-    if [[ "${ARCH}" == "x86_64" ]]; then
-        echo "node@sha256:a0b787b0d53feacfa6d606fb555e0dbfebab30573277f1fe25148b05b66fa097"
-    elif [[ "${ARCH}" == "arm64" ]]; then
-        echo "node@sha256:b4b7a1dd149c65ee6025956ac065a843b4409a62068bd2b0cbafbb30ca2fab3b"
-    else
-        echo "Unsupported architecture"
-        exit 1
-    fi
-)
+
 
 # Doing an explicit `docker pull` of the container base image to work around an issue where
 # Travis fails to pull the base image when using BuildKit. Seems to be related to:
 # https://github.com/moby/buildkit/issues/606 and https://github.com/moby/buildkit/issues/1397
-docker pull "${NODE_IMAGE}"
-docker build --force-rm \
-    --build-arg ARCH="${ARCH}" \
-    --build-arg NODE_IMAGE="arm64v8/node:hydrogen-alpine" \
-    --build-arg GITHUB_RELEASE="${TRAVIS_TAG:-none}" \
-    --platform linux/arm64 \
-    -f src/shadowbox/docker/Dockerfile \
-    -t "${SB_IMAGE:-outline/shadowbox}" \
-    "${ROOT_DIR}"
+docker pull "arm64v8/node:hydrogen-alpine"
+docker buildx create --name mybuilder --use
+docker buildx inspect mybuilder --bootstrap
+
+docker buildx build --platform linux/arm64 \
+  --build-arg ARCH="arm64" \
+  --build-arg NODE_IMAGE="arm64v8/node:hydrogen-alpine" \
+  --build-arg GITHUB_RELEASE="${TRAVIS_TAG:-none}" \
+  -f src/shadowbox/docker/Dockerfile \
+  -t "${SB_IMAGE:-outline/shadowbox}" \
+  "${ROOT_DIR}" \
+  --push
+
