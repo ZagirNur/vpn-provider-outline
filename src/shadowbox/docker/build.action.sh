@@ -42,7 +42,7 @@ docker pull "${NODE_IMAGE}"
 docker buildx create --name mybuilder --use
 docker buildx inspect mybuilder --bootstrap
 
-docker buildx build --disable-content-trust --platform linux/arm64 \
+docker buildx build --platform linux/arm64 \
     --build-arg ARCH="${ARCH}" \
     --build-arg NODE_IMAGE="${NODE_IMAGE}" \
     --build-arg GITHUB_RELEASE="${TRAVIS_TAG:-none}" \
