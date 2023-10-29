@@ -29,11 +29,11 @@ export ARCH=${ARCH:-x86_64}
 # Doing an explicit `docker pull` of the container base image to work around an issue where
 # Travis fails to pull the base image when using BuildKit. Seems to be related to:
 # https://github.com/moby/buildkit/issues/606 and https://github.com/moby/buildkit/issues/1397
-docker pull "arm64v8/node:hydrogen-alpine"
+docker pull --disable-content-trust "arm64v8/node:hydrogen-alpine"
 docker buildx create --name mybuilder --use
 docker buildx inspect mybuilder --bootstrap
 
-docker buildx build --platform linux/arm64 \
+docker buildx build --disable-content-trust --platform linux/arm64 \
   --build-arg ARCH="arm64" \
   --build-arg NODE_IMAGE="arm64v8/node:hydrogen-alpine" \
   --build-arg GITHUB_RELEASE="${TRAVIS_TAG:-none}" \
