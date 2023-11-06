@@ -412,6 +412,8 @@ export class ShadowsocksManagerService {
           android: 'https://play.google.com/store/apps/details?id=org.outline.android.client',
           ios: 'https://itunes.apple.com/us/app/outline-app/id1356177741',
           macos: 'https://apps.apple.com/us/app/outline-secure-internet-access/id1356178125',
+          windows:
+            'https://s3.amazonaws.com/outline-releases/client/windows/stable/Outline-Client.exe',
           chrome: 'https://play.google.com/store/apps/details?id=org.outline.android.client',
         },
       };
