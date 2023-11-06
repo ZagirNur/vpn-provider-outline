@@ -323,7 +323,7 @@ export class ShadowsocksManagerService {
   ): Promise<void> {
     logging.debug(`getProviderInfo request ${JSON.stringify(req.params)}`);
     const response = {
-      vpnType: 'ikev2',
+      vpnType: 'outline',
       description: 'Необходимо скачать приложение outline',
       connectionsInfo: {
         outline: {
