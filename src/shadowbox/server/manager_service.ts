@@ -410,9 +410,9 @@ export class ShadowsocksManagerService {
         distributionType: 'string',
         connBase64: Buffer.from(accessKeyJson.accessUrl, 'latin1').toString('base64'),
         instructions:
-          'Подключение создано, скачайте приложение outline и вставьте туда строку ниже: \n\n ```\n' +
+          'Подключение создано, скачайте приложение outline и вставьте туда строку ниже: \n\n <code>' +
           accessKeyJson.accessUrl +
-          '\n```',
+          '</code>',
         additionalUrls: {
           android: 'https://play.google.com/store/apps/details?id=org.outline.android.client',
           ios: 'https://apps.apple.com/ru/app/outline-app/id1356177741',
