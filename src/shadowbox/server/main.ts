@@ -236,10 +236,11 @@ async function main() {
 
   const certificateFilename = process.env.SB_CERTIFICATE_FILE;
   const privateKeyFilename = process.env.SB_PRIVATE_KEY_FILE;
-  const apiServer = restify.createServer({
-    certificate: fs.readFileSync(certificateFilename),
-    key: fs.readFileSync(privateKeyFilename),
-  });
+  // const apiServer = restify.createServer({
+  //   certificate: fs.readFileSync(certificateFilename),
+  //   key: fs.readFileSync(privateKeyFilename),
+  // });
+  const apiServer = restify.createServer();
 
   // Pre-routing handlers
   const cors = corsMiddleware({
