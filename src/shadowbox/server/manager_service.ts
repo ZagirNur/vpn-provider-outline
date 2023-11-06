@@ -389,7 +389,12 @@ export class ShadowsocksManagerService {
           )
         );
       }
-      let accessKey = await this.accessKeys.createNewAccessKey();
+
+      let accessKey =
+        this.accessKeys.listAccessKeys().find((accessKey) => {
+          return accessKey.name === connectionName;
+        }) || (await this.accessKeys.createNewAccessKey());
+
       //set custom host
       accessKey = {
         ...accessKey,
