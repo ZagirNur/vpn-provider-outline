@@ -419,7 +419,8 @@ export class ShadowsocksManagerService {
           macos: 'https://apps.apple.com/us/app/outline-secure-internet-access/id1356178125',
           windows:
             'https://s3.amazonaws.com/outline-releases/client/windows/stable/Outline-Client.exe',
-          chrome: 'https://play.google.com/store/apps/details?id=org.outline.android.client',
+          linux:
+            'https://s3.amazonaws.com/outline-releases/client/linux/stable/Outline-Client.AppImage',
         },
       };
       res.send(HttpSuccess.OK, response);
