@@ -64,11 +64,13 @@ interface RequestParams {
   //   method: string
   [param: string]: unknown;
 }
+
 // Simplified request and response type interfaces containing only the
 // properties we actually use, to make testing easier.
 interface RequestType {
   params: RequestParams;
 }
+
 interface ResponseType {
   send(code: number, data?: {}): void;
 }
@@ -130,6 +132,10 @@ export function bindService(
 
   apiServer.post(`${apiPrefix}/access-keys`, service.createNewAccessKey.bind(service));
   apiServer.get(`${apiPrefix}/access-keys`, service.listAccessKeys.bind(service));
+
+  apiServer.get(`${apiPrefix}/provider/info`, service.getProviderInfo.bind(service));
+  apiServer.post(`${apiPrefix}/connections`, service.createConnectionHandler.bind(service));
+  apiServer.del(`${apiPrefix}/connections/:name`, service.deleteConnectionHandler.bind(service));
 
   apiServer.get(`${apiPrefix}/access-keys/:id`, service.getAccessKey.bind(service));
   apiServer.del(`${apiPrefix}/access-keys/:id`, service.removeAccessKey.bind(service));
@@ -310,8 +316,139 @@ export class ShadowsocksManagerService {
     return next();
   }
 
+  public async getProviderInfo(
+    req: RequestType,
+    res: ResponseType,
+    next: restify.Next
+  ): Promise<void> {
+    logging.debug(`getProviderInfo request ${JSON.stringify(req.params)}`);
+    const response = {
+      vpnType: 'ikev2',
+      description: 'Необходимо скачать приложение outline',
+      connectionsInfo: {
+        outline: {
+          distributionType: 'string',
+          description: 'outline профиль',
+        },
+      },
+    };
+    res.send(HttpSuccess.OK, response);
+    logging.debug(`getProviderInfo response ${JSON.stringify(response)}`);
+    return next();
+  }
+
+  public async createConnectionHandler(
+    req: RequestType,
+    res: ResponseType,
+    next: restify.Next
+  ): Promise<void> {
+    try {
+      logging.debug(`createConnectionHandler request ${JSON.stringify(req.params)}`);
+      const reqBody = req.params;
+      if (!reqBody) {
+        return next(
+          new restifyErrors.MissingParameterError(
+            {statusCode: 400},
+            'Parameter `reqBody` is missing'
+          )
+        );
+      }
+      if (reqBody.connectionType !== 'outline') {
+        return next(
+          new restifyErrors.InvalidArgumentError(
+            {statusCode: 400},
+            `Expected a string connectionType, instead got ${
+              reqBody.connectionType
+            } of type ${typeof reqBody.connectionType}`
+          )
+        );
+      }
+      const connectionName = reqBody.connectionName;
+      if (!connectionName) {
+        return next(
+          new restifyErrors.MissingParameterError(
+            {statusCode: 400},
+            'Parameter `connectionName` is missing'
+          )
+        );
+      }
+      if (typeof connectionName !== 'string') {
+        return next(
+          new restifyErrors.InvalidArgumentError(
+            {statusCode: 400},
+            `Expected a string connectionName, instead got ${connectionName} of type ${typeof connectionName}`
+          )
+        );
+      }
+      const customHost = reqBody.customHost;
+      if (customHost && typeof customHost !== 'string') {
+        return next(
+          new restifyErrors.InvalidArgumentError(
+            {statusCode: 400},
+            `Expected a string customHost, instead got ${customHost} of type ${typeof customHost}`
+          )
+        );
+      }
+      const accessKeyJson = accessKeyToApiJson(await this.accessKeys.createNewAccessKey());
+      this.accessKeys.renameAccessKey(accessKeyJson.id, connectionName);
+
+      const response = {
+        distributionType: 'string',
+        connBase64: Buffer.from(accessKeyJson.accessUrl, 'latin1').toString('base64'),
+        instructions:
+          'Подключение создано, скачайте приложение outline и вставьте туда строку ниже: \n <code>' +
+          accessKeyJson.accessUrl +
+          '</code>',
+      };
+      res.send(HttpSuccess.OK, response);
+      logging.debug(`createConnectionHandler response ${JSON.stringify(response)}`);
+      return next();
+    } catch (error) {
+      logging.error(error);
+      return next(new restifyErrors.InternalServerError());
+    }
+  }
+
+  public async deleteConnectionHandler(
+    req: RequestType,
+    res: ResponseType,
+    next: restify.Next
+  ): Promise<void> {
+    try {
+      logging.debug(`deleteConnectionHandler request ${JSON.stringify(req.params)}`);
+      const name = req.params.name;
+      if (!name) {
+        return next(
+          new restifyErrors.MissingParameterError({statusCode: 400}, 'Parameter `name` is missing')
+        );
+      }
+      if (typeof name !== 'string') {
+        return next(
+          new restifyErrors.InvalidArgumentError(
+            {statusCode: 400},
+            `Expected a string name, instead got ${name} of type ${typeof name}`
+          )
+        );
+      }
+      this.accessKeys.listAccessKeys().forEach((accessKey) => {
+        if (accessKey.name === name) {
+          this.accessKeys.removeAccessKey(accessKey.id);
+        }
+      });
+      res.send(HttpSuccess.NO_CONTENT);
+      return next();
+    } catch (error) {
+      logging.error(error);
+      return next(new restifyErrors.InternalServerError());
+    }
+  }
+
   // Creates a new access key
-  public async createNewAccessKey(req: RequestType, res: ResponseType, next: restify.Next): Promise<void> {
+  public async createNewAccessKey(
+    req: RequestType,
+    res: ResponseType,
+    next: restify.Next
+  ): Promise<void> {
     try {
       logging.debug(`createNewAccessKey request ${JSON.stringify(req.params)}`);
       let encryptionMethod = req.params.method;
@@ -319,16 +456,20 @@ export class ShadowsocksManagerService {
         encryptionMethod = '';
       }
       if (typeof encryptionMethod !== 'string') {
-        return next(new restifyErrors.InvalidArgumentError(
+        return next(
+          new restifyErrors.InvalidArgumentError(
             {statusCode: 400},
-            `Expected a string encryptionMethod, instead got ${encryptionMethod} of type ${
-                typeof encryptionMethod}`));
+            `Expected a string encryptionMethod, instead got ${encryptionMethod} of type ${typeof encryptionMethod}`
+          )
+        );
       }
-      const accessKeyJson = accessKeyToApiJson(await this.accessKeys.createNewAccessKey(encryptionMethod));
+      const accessKeyJson = accessKeyToApiJson(
+        await this.accessKeys.createNewAccessKey(encryptionMethod)
+      );
       res.send(201, accessKeyJson);
       logging.debug(`createNewAccessKey response ${JSON.stringify(accessKeyJson)}`);
       return next();
-    } catch(error) {
+    } catch (error) {
       logging.error(error);
       if (error instanceof errors.InvalidCipher) {
         return next(new restifyErrors.InvalidArgumentError({statusCode: 400}, error.message));
