@@ -389,16 +389,31 @@ export class ShadowsocksManagerService {
           )
         );
       }
-      const accessKeyJson = accessKeyToApiJson(await this.accessKeys.createNewAccessKey());
+      let accessKey = await this.accessKeys.createNewAccessKey();
+      //set custom host
+      accessKey = {
+        ...accessKey,
+        proxyParams: {
+          ...accessKey.proxyParams,
+          hostname: `${customHost}` || accessKey.proxyParams.hostname,
+        },
+      };
+      const accessKeyJson = accessKeyToApiJson(accessKey);
       this.accessKeys.renameAccessKey(accessKeyJson.id, connectionName);
 
       const response = {
         distributionType: 'string',
         connBase64: Buffer.from(accessKeyJson.accessUrl, 'latin1').toString('base64'),
         instructions:
-          'Подключение создано, скачайте приложение outline и вставьте туда строку ниже: \n <code>' +
+          'Подключение создано, скачайте приложение outline и вставьте туда строку ниже: \n\n <code>' +
           accessKeyJson.accessUrl +
           '</code>',
+        additionalUrls: {
+          android: 'https://play.google.com/store/apps/details?id=org.outline.android.client',
+          ios: 'https://itunes.apple.com/us/app/outline-app/id1356177741',
+          macos: 'https://apps.apple.com/us/app/outline-secure-internet-access/id1356178125',
+          chrome: 'https://play.google.com/store/apps/details?id=org.outline.android.client',
+        },
       };
       res.send(HttpSuccess.OK, response);
       logging.debug(`createConnectionHandler response ${JSON.stringify(response)}`);
